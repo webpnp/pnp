@@ -78,6 +78,6 @@ if __name__ == '__main__':
     net = ResNet(arch='resnet50', num_classes=args.nclasses).to(device)
     net.load_state_dict(torch.load(args.model_path))
     test_loader = DataLoader(dataset['test'], batch_size=32, shuffle=False, num_workers=8, pin_memory=True)
-    test_accuracy = evaluate(test_loader, net, device)
+    test_accuracy = evaluate(test_loader, net, device)['accuracy']
     
     print(f'Test accuracy: {test_accuracy:.3f}')
