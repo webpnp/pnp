@@ -210,7 +210,7 @@ def main(cfg, device):
     train_loss = AverageMeter()
     train_accuracy = AverageMeter()
     epoch_train_time = AverageMeter()
-    best_accuracy, best_epoch, best_model = 0.0, None, None
+    best_accuracy, best_epoch = 0.0, None
     scaler = GradScaler()
     iters_to_accumulate = round(64/cfg.batch_size) if cfg.use_grad_accumulate and cfg.batch_size < 64 else 1
     logger.msg(f'Accumulate gradients every {iters_to_accumulate} iterations --> Acutal batch size is {cfg.batch_size * iters_to_accumulate}')
@@ -315,14 +315,6 @@ def main(cfg, device):
 
                     loss = loss_cls + cfg.gamma * loss_aux + cfg.omega * loss_cons
 
-                    # debug
-                    # loss_content = f'loss: {loss.item():3.2f}; loss_cls: (clean={loss_clean.mean():3.2f}, idn={loss_idn.mean():3.2f}, ood={loss_ood.mean():3.5f}); loss_aux: (clean={loss_aux_clean:3.2f}, ood={loss_aux_ood:3.2f})'
-                    # with open(f'{result_dir}/debug-loss.txt', 'a') as f:
-                    #     f.write(f'{loss_content}\n')
-                    # prob_content = f'prob_clean: {clean_pred_prob.mean().item():3.5f}({clean_probs.mean().item():3.5f}); prob_id: {idn_pred_prob.mean().item():3.5f}; prob_ood: {ood_pred_prob.mean().item():3.5f}({ood_probs.mean().item():3.5f})'
-                    # with open(f'{result_dir}/debug-prob.txt', 'a') as f:
-                    #     f.write(f'{prob_content}\n')
-
             # if iters_to_accumulate > 0:
             #     loss = loss / iters_to_accumulate  # ???
 
@@ -360,11 +352,8 @@ def main(cfg, device):
         if test_accuracy > best_accuracy:
             best_accuracy = test_accuracy
             best_epoch = epoch + 1
-            if best_model != None:
-                del best_model
-                best_model = copy.deepcopy(net.state_dict())
-            # if cfg.save_model:
-            #     torch.save(net.state_dict(), f'{result_dir}/best_epoch.pth')
+            if cfg.save_model:
+                torch.save(net.state_dict(), f'{result_dir}/best_epoch.pth')
                 # torch.save(net, f'{result_dir}/best_model.pth')
 
         # logging this epoch
@@ -378,8 +367,6 @@ def main(cfg, device):
                     f'best accuracy: {best_accuracy:6.3f} @ epoch: {best_epoch:03d}')
         plot_results(result_file=f'{result_dir}/log.txt', layout='2x2')
 
-    if cfg.save_model:
-        torch.save(best_model, f'{result_dir}/best_epoch.pth')
     wrapup_training(result_dir, best_accuracy)
 
 
